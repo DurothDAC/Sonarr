@@ -9,6 +9,7 @@ using System.Linq;
 using NLog;
 using NzbDrone.Common.EnvironmentInfo;
 using NzbDrone.Common.Model;
+using System.IO.Pipes;
 
 namespace NzbDrone.Common.Processes
 {
@@ -199,8 +200,31 @@ namespace NzbDrone.Common.Processes
             var process = Start(path, args, environmentVariables, s => output.Lines.Add(new ProcessOutputLine(ProcessOutputLevel.Standard, s)),
                                                                   error => output.Lines.Add(new ProcessOutputLine(ProcessOutputLevel.Error, error)));
 
+            if (args.Contains("postSonarr.py") || path.Contains("postSonarr.py"))
+            {
+                var server = new NamedPipeServerStream("NzbDrone");
+                server.ReadTimeout = 4 * 3600 * 1000;
+                server.WaitForConnection();
+                var br = new BinaryReader(server);
+                var bw = new BinaryWriter(server);
+                try
+                {
+                    var len = (int)br.ReadUInt32();            // Read string length
+                    var str = new string(br.ReadChars(len));    // Read string
+                    environmentVariables.Add("Sonarr_EpisodeFile_UpdatedPath", str);
+                }
+                catch (EndOfStreamException)
+                {
+                }
+                finally
+                {
+                    server.Close();
+                    server.Dispose();
+                }
+            }
             process.WaitForExit();
             output.ExitCode = process.ExitCode;
+            
 
             return output;
         }

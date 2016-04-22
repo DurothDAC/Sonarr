@@ -83,6 +83,11 @@ namespace NzbDrone.Core.MediaFiles.EpisodeImport
 
                     if (newDownload)
                     {
+                        _eventAggregator.PublishEvent(new EpisodeDownloadedEvent(localEpisode, episodeFile, oldFiles));
+                    }
+
+                    if (newDownload)
+                    {
                         bool copyOnly = downloadClientItem != null && downloadClientItem.IsReadOnly;
 
                         episodeFile.SceneName = GetSceneName(downloadClientItem, localEpisode);
@@ -106,11 +111,7 @@ namespace NzbDrone.Core.MediaFiles.EpisodeImport
                     {
                         _eventAggregator.PublishEvent(new EpisodeImportedEvent(localEpisode, episodeFile, newDownload));
                     }
-
-                    if (newDownload)
-                    {
-                        _eventAggregator.PublishEvent(new EpisodeDownloadedEvent(localEpisode, episodeFile, oldFiles));
-                    }
+                    
                 }
                 catch (Exception e)
                 {

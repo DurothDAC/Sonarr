@@ -79,6 +79,11 @@ namespace NzbDrone.Core.Notifications.CustomScript
             environmentVariables.Add("Sonarr_EpisodeFile_SourceFolder", Path.GetDirectoryName(sourcePath));
 
             ExecuteScript(environmentVariables);
+
+            if (environmentVariables.ContainsKey("Sonarr_EpisodeFile_UpdatedPath"))
+            {
+                message.EpisodeFile.Path = environmentVariables["Sonarr_EpisodeFile_UpdatedPath"];
+            }
         }
 
         public override void OnRename(Series series)
